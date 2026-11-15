@@ -17,7 +17,7 @@ Documentor class >> on: aClass [
 
 { #category : 'reporting' }
 Documentor >> report [
-    | builder |
+    | builder superMethodsCount |
     builder := MicMicrodownTextualBuilder new.
     
     "1. Titre"
@@ -54,7 +54,45 @@ Documentor >> report [
     builder text: '- is defined in package ', targetClass package name.
     builder newLine.
     
-    "7. Méthodes et commentaires"
+    "7. METRIQUES"
+    builder text: '## Metrics'.
+    builder newLine.
+    
+    "Profondeur d'héritage"
+    builder text: '- Inheritance depth: ', targetClass allSuperclasses size printString.
+    builder newLine.
+    
+    "Champs hérités"
+    builder text: '- Inherited fields: ', (targetClass allInstVarNames size - targetClass instVarNames size) printString.
+    builder newLine.
+    
+    "Champs définis"
+    builder text: '- Defined fields: ', targetClass instVarNames size printString.
+    builder newLine.
+    
+    "Méthodes héritées"
+    builder text: '- Inherited methods: ', (targetClass allMethods size - targetClass methods size) printString.
+    builder newLine.
+    
+    "Méthodes définies"
+    builder text: '- Defined methods: ', targetClass methods size printString.
+    builder newLine.
+    
+    "Méthodes qui appellent super (Recherche simple dans le code source)"
+    superMethodsCount := 0.
+    targetClass methods do: [ :m | 
+        (m sourceCode includesSubstring: 'super') ifTrue: [ superMethodsCount := superMethodsCount + 1 ].
+    ].
+    builder text: '- Methods calling super: ', superMethodsCount printString.
+    builder newLine.
+    
+    "Noms de méthodes trop longs (ex: > 20 caractères)"
+    builder text: '- Methods with overly long names: '.
+    (targetClass methods select: [ :m | m selector size > 20 ]) 
+        do: [ :m | builder text: m selector, ' ' ].
+    builder newLine.
+    
+    "8. Méthodes et commentaires"
     builder text: '## Methods'.
     builder newLine.
     targetClass methods do: [ :method |
