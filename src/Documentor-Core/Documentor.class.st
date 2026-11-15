@@ -20,21 +20,52 @@ Documentor >> report [
     | builder |
     builder := MicMicrodownTextualBuilder new.
     
-    "Titre avec le nom de la classe (contournement)"
+    "1. Titre"
     builder text: '# ', targetClass name.
     builder newLine.
     
-    "Héritage"
+    "2. Premier paragraphe du commentaire"
+    targetClass comment ifNotNil: [ :c |
+        | firstParagraph |
+        firstParagraph := c asString splitOn: String cr, String cr.
+        firstParagraph ifNotEmpty: [ 
+            builder text: firstParagraph first.
+            builder newLine.
+        ].
+    ].
+    
+    "3. Héritage"
     builder text: '- a subclass of ', targetClass superclass name.
     builder newLine.
     
-    "Champs (variables d'instance)"
+    "4. Position dans la hiérarchie (superclasses)"
+    builder text: '**Hierarchy:** '.
+    targetClass allSuperclasses do: [ :superclass |
+        builder text: superclass name, ' > '.
+    ].
+    builder newLine.
+    
+    "5. Champs"
     builder text: '- has the following fields: '.
     targetClass instVarNames do: [ :each | builder text: '#', each, ' ' ].
     builder newLine.
     
-    "Package"
+    "6. Package"
     builder text: '- is defined in package ', targetClass package name.
+    builder newLine.
+    
+    "7. Méthodes et commentaires"
+    builder text: '## Methods'.
+    builder newLine.
+    targetClass methods do: [ :method |
+        builder text: '- `', method selector, '`'.
+        method comment ifNotNil: [ :comment |
+            | firstLine |
+            firstLine := comment asString lines first.
+            builder text: ': ', firstLine.
+        ].
+        builder newLine.
+    ].
     
     ^ builder contents
 ]
